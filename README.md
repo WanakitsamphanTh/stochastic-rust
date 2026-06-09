@@ -1,7 +1,8 @@
 ## Knuth's Die Algorithm
 ```mermaid
 flowchart LR
-    s0((s0)) --0.5--> s1((s1))
+    start:::hidden --> s0((s0))
+    s0 --0.5--> s1((s1))
     s0 --0.5--> s2((s2))
     s1 --0.5--> s3((s3))
     s1 --0.5--> s4((s4))
