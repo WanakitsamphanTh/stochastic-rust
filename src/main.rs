@@ -1,7 +1,7 @@
-use ndarray::{arr1,arr2,Array1,s};
+use ndarray::{arr1,arr2,s};
 
 fn main() {
-    let k: i8 = 20;
+    let e: f32 = 1e-10; // error threshold
     let s0 = arr1(&[1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]);
     let p = arr2(&[
         [0.0,0.5,0.5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
@@ -19,8 +19,15 @@ fn main() {
         [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0]
     ]);
     let mut s_i = s0;
-    for i in 1..=k {
-        s_i = s_i.dot(&p);
+    let mut s_j = s_i.clone();
+    for i in 1..=100 {
+        s_i = s_i.dot(&p); 
         print!("i = {0}; {1}\n", i, s_i.slice(s![7..=12]));
+        let diff: f32 = (&s_i - &s_j).abs().sum();   
+        // break when the difference of probability in two iteration steps converges to zero
+        if diff < e { 
+            break;
+        }
+        s_j = s_i.clone();
     }
 }
