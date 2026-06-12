@@ -1,8 +1,9 @@
 use ndarray::{arr1,arr2,s};
 
+use crate::markov::{DTMC, MarkovChain};
+mod markov;
+
 fn main() {
-    let e: f32 = 1e-10; // error threshold
-    let s0 = arr1(&[1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]);
     let p = arr2(&[
         [0.0,0.5,0.5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
         [0.0,0.0,0.0,0.5,0.5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
@@ -18,16 +19,16 @@ fn main() {
         [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0],
         [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0]
     ]);
-    let mut s_i = s0;
-    let mut s_j = s_i.clone();
-    for i in 1..=100 {
-        s_i = s_i.dot(&p); 
-        print!("i = {0}; {1}\n", i, s_i.slice(s![7..=12]));
-        let diff: f32 = (&s_i - &s_j).abs().sum();   
-        // break when the difference of probability in two iteration steps converges to zero
-        if diff < e { 
-            break;
-        }
-        s_j = s_i.clone();
+
+    let mut dtmc: DTMC = DTMC::new(p.clone(),0, 13);
+
+    for i in 1..=30 {
+        dtmc.next_step();
+        let states = dtmc.state();
+        print!("i = {0}; {1}\n", i, states.slice(s![7..=12]));
     }
+    dtmc.reset();
+    dtmc.simulate(10);
+    let states = dtmc.state();
+    print!("after 15 epochs: {0}\n", states);
 }
