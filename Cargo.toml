@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 ndarray = "0.17.2"
+scirs2-linalg = "0.5.0"
