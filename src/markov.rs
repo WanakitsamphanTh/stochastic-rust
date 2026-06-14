@@ -1,5 +1,4 @@
 use ndarray::{self, Array, Array2, Axis};
-use ndarray::{ArrayView2};
 use scirs2_linalg::expm;
 
 pub type TransitionMatrix = ndarray::prelude::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::prelude::Dim<[usize; 2]>, f32>;
