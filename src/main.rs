@@ -1,5 +1,10 @@
-use crate::markov::{DTMC, CTMC, MarkovChain};
 mod markov;
+mod specification;
+
+use crate::markov::{DTMC, CTMC, MarkovChain};
+use crate::specification::errors::CodeError;
+use crate::specification::{token, scanner};
+use std::fs;
 
 fn knuth_die() {
     let transition = |curr: usize, next: usize| -> f32  {
@@ -80,7 +85,21 @@ fn queue_system() {
     print!("after t=50.0: {0}\n", states);
 }
 
-fn main() {
+fn testing_models() {
     knuth_die();
     queue_system();
+}
+
+fn main() {
+
+    let mut reader = scanner::Reader::new(fs::read_to_string("./input/model.txt").unwrap());
+    let result = reader.tokens();
+    match result {
+        Ok(tokens) => for token in tokens {
+            print!("{:?}\n",token);
+        }
+        Err(error) => {
+            print!("{}", error.what()); 
+        }   
+    }
 }
