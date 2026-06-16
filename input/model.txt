@@ -1,7 +1,7 @@
 dtmc
 def:
     $p = 0.5
-    $q = 1.0 - $q
+    $q = 1.0 - $p
 model:
     n0 -> ($p) n1, ($q) n2
     n1 -> ($p) n0, ($q) n2

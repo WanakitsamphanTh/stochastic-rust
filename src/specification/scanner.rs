@@ -4,7 +4,6 @@ use crate::token::{Token, TokenType, Literal};
 
 pub struct Reader {
     source: Vec<char>,
-    tokens: Vec<Token>,
     line: usize,
     pos: usize,
     current: usize,
@@ -13,10 +12,8 @@ pub struct Reader {
 
 impl Reader {
     pub fn new(source: String) -> Self {
-        let tokens: Vec<Token> = Vec::new();
         Self {
             source: source.chars().collect(),
-            tokens: tokens,
             start: 0,
             line: 0,
             current: 0,
@@ -104,7 +101,6 @@ impl Reader {
         let current = self.current;
         let start = self.start;
         let lexeme: String = self.source[start..current].iter().collect();
-        print!("{}\n", lexeme);
         let val: f32 = lexeme.parse::<f32>().unwrap();
         return Result::Ok(Token::new(TokenType::Value, lexeme, Literal::Float(val), line, pos))
     }
@@ -153,22 +149,23 @@ impl Reader {
             }
         }
     }
-    pub fn tokens(&mut self) -> Result<&Vec<Token>, ScanError> {
+    pub fn scan(&mut self) -> Result<Vec<Token>, ScanError> {
+        let mut tokens: Vec<Token> = Vec::new();
         while !self.is_at_end() {
             self.start = self.current;
             let result = self.scan_token();
             match result {
-                Ok(token) => self.tokens.push(token),
+                Ok(token) => tokens.push(token),
                 Err(error) => return Result::Err(error)
             }
         }
-        self.tokens.push(Token::new(
+        tokens.push(Token::new(
             TokenType::Eof,
             String::new(),
             Literal::Null,
             self.line,
             self.pos,
         ));
-        return Result::Ok(&self.tokens);
+        return Result::Ok(tokens);
     }
 }

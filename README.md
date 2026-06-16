@@ -1,3 +1,13 @@
+# Markov Chain Simulator
+This project aims to develop a markov chain simulator in Rust which generates and simulates the model according to model specification. DTMC and CTMC is already implemented. The next step is to create the model generator. \
+**Progress** 
+
+* [X] DTMC
+* [X] CTMC
+* [X] Tokenizer
+* [ ] Parser
+* [ ] Model Generator
+
 ## Model Specification Format
 ```
 model_type

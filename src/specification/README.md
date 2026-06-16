@@ -4,7 +4,7 @@
 **modelType** : `dtmc` | `ctmc` \
 **DefineSection** : `define` `:` `\n` [variableDeclaration `\n`]+ `\n` \
 **variableDeclaration** : variable `=` expression \
-**ModelSection** : `model` `:` `\n` [transitionDeclaration `\n`]+ `\n`
+**ModelSection** : `model` `:` `\n` [transitionDeclaration `\n`]+ `\n`\
 **transitionDeclaration** : identifier [`->` `(` expression `)` identifier]+ \
 **InitSection** : `init` `:` `\n` [initialization `\n`]+ `\n` \
 **initilization** : identifier `=` expression

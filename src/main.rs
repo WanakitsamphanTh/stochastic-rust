@@ -3,9 +3,11 @@ mod specification;
 
 use crate::markov::{DTMC, CTMC, MarkovChain, Time};
 use crate::specification::errors::CodeError;
+use crate::specification::parser::Parser;
 use crate::specification::{token, scanner};
 use std::fs;
 
+#[warn(unused)]
 fn knuth_die() {
     let transition = |curr: usize, next: usize| -> f32  {
         match curr {
@@ -59,6 +61,7 @@ fn knuth_die() {
     print!("after 50 steps: {0}\n", states);
 }
 
+#[warn(unused)]
 fn queue_system() {
     let init = vec![1.0,0.0,0.0,0.0,0.0,0.0,0.0];
     let mu = 2.0;
@@ -97,13 +100,10 @@ fn main() {
 fn main() {
 
     let mut reader = scanner::Reader::new(fs::read_to_string("./input/model.txt").unwrap());
-    let result = reader.tokens();
-    match result {
-        Ok(tokens) => for token in tokens {
-            print!("{:?}\n",token);
-        }
-        Err(error) => {
-            print!("{}", error.what()); 
-        }   
+    let tokens = reader.scan().unwrap_or_else(|e| panic!("{}", e.what()));
+    for token in &tokens {
+        print!("{:?}\n",token);
     }
+    let mut parser = Parser::new(tokens);
+    parser.parse();
 } 

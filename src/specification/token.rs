@@ -1,6 +1,6 @@
 use std::string::String;
 
-#[derive(Debug)]
+#[derive(Debug,PartialEq,Eq)]
 pub enum TokenType {
     // Model types
     Dtmc,
@@ -46,11 +46,11 @@ pub enum Literal {
 
 #[derive(Debug)]
 pub struct Token {
-    token_type: TokenType,
-    lexeme: String,
-    literal: Literal,
-    line: usize,
-    pos: usize
+    pub token_type: TokenType,
+    pub lexeme: String,
+    pub literal: Literal,
+    pub line: usize,
+    pub pos: usize
 }
 
 impl Token {

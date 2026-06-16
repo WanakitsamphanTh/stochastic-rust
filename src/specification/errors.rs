@@ -1,3 +1,5 @@
+use scirs2_linalg::simd_ops::neural::Experience;
+
 use crate::token::{Token};
 use std::string::String;
 pub trait CodeError {
@@ -29,6 +31,45 @@ impl CodeError for ScanError {
 }
 
 pub struct SyntaxError {
-    token: Token,
-    msg: String
+    line: usize,
+    pos: usize,
+    lexeme: String,
+    msg: &'static str
+}
+
+impl SyntaxError {
+    pub fn new(token: &Token, msg: &'static str) -> Self {
+        Self {
+            line: token.line,
+            pos: token.pos,
+            lexeme: token.lexeme.clone(),
+            msg: msg
+        }
+    }
+}
+
+impl CodeError for SyntaxError {
+    fn what(&self) -> String {
+        return String::from(format!("Syntax Error! {} at {}:{}, {} ",self.lexeme, self.line, self.pos, self.msg));
+    }
+}
+
+pub struct TypeError {
+    expected: String,
+    given: String
+}
+
+impl TypeError {
+    pub fn new(expected: String, given: String) -> Self {
+        Self {
+            expected: expected,
+            given: given
+        }
+    }
+}
+
+impl CodeError for TypeError {
+    fn what(&self) -> String {
+        return String::from(format!("Type Error: expected {} but given {}", self.expected, self.given));
+    }
 }
