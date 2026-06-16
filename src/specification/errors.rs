@@ -73,3 +73,25 @@ impl CodeError for TypeError {
         return String::from(format!("Type Error: expected {} but given {}", self.expected, self.given));
     }
 }
+
+pub struct IdentifierNotFoundError {
+    identifier: String,
+    line: usize,
+    pos: usize
+}
+
+impl IdentifierNotFoundError {
+    pub fn new(name: &Token) -> Self {
+        Self {
+            identifier: name.lexeme.clone(),
+            line: name.line,
+            pos: name.pos
+        }
+    }
+}
+
+impl CodeError for IdentifierNotFoundError {
+    fn what(&self) -> String {
+        return String::from(format!("Error: name {} at {}:{} not found", self.identifier, self.line, self.pos));
+    }
+}

@@ -1,4 +1,4 @@
-use crate::specification::errors::{CodeError, SyntaxError, TypeError};
+use crate::specification::errors::{CodeError, IdentifierNotFoundError, SyntaxError, TypeError};
 use crate::specification::generator::Generator;
 use crate::specification::token::{Token,TokenType};
 
@@ -50,12 +50,15 @@ impl Expression for LiteralExpression {
 }
 
 pub struct VariableExpression {
-    name: String,
+    name: Token,
 }
 
 impl Expression for VariableExpression {
-    fn eval<'a>(&'a self, _: &mut Generator) -> Result<Value, Box<dyn CodeError>>{
-         Result::Ok(Value::Boolean(true))
+    fn eval<'a>(&'a self, generator: &mut Generator) -> Result<Value, Box<dyn CodeError>>{
+        match generator.lookup_variable(&self.name.lexeme) {
+            Ok(val) => Result::Ok(val),
+            Err(_) => Result::Err(Box::new(IdentifierNotFoundError::new(&self.name)))
+        }
     }
 }
 
