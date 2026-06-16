@@ -1,7 +1,7 @@
 mod markov;
 mod specification;
 
-use crate::markov::{DTMC, CTMC, MarkovChain};
+use crate::markov::{DTMC, CTMC, MarkovChain, Time};
 use crate::specification::errors::CodeError;
 use crate::specification::{token, scanner};
 use std::fs;
@@ -49,10 +49,12 @@ fn knuth_die() {
         }
     };
 
-    let mut dtmc: DTMC = DTMC::new(0, 1.0,13, transition);
+    let init_prob = vec![1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0];
+
+    let mut dtmc: DTMC = DTMC::from_fn(init_prob,13, transition);
 
     print!("Knuth die algorithm: \n");
-    dtmc.simulate(50);
+    dtmc.simulate(Time::Dt(50));
     let states = dtmc.state();
     print!("after 50 steps: {0}\n", states);
 }
@@ -78,17 +80,19 @@ fn queue_system() {
             }
         }
     };
-    let mut ctmt: CTMC = CTMC::new(init, 7, rate_fn);
+    let mut ctmt: CTMC = CTMC::from_fn(init, 7, rate_fn);
     print!("Queue system: \n");
-    ctmt.simulate(50.0);
+    ctmt.simulate(Time::Ct(100.0));
     let states = ctmt.state();
-    print!("after t=50.0: {0}\n", states);
+    print!("after t=100.0: {0}\n", states);
 }
 
-fn testing_models() {
+
+/*
+fn main() {
     knuth_die();
     queue_system();
-}
+} */
 
 fn main() {
 
@@ -102,4 +106,4 @@ fn main() {
             print!("{}", error.what()); 
         }   
     }
-}
+} 

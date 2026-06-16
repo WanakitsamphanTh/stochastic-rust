@@ -1,3 +1,5 @@
+use ndarray::Array2;
+
 use crate::{markov::MarkovChain, token::Token};
 use std::collections::HashMap;
 use std::string::String;
@@ -7,22 +9,22 @@ enum ModelType {
 }
 
 trait Command {
-    
+
+}
+
+pub struct SectionCommand {
+
 }
 
 pub struct Parser {
     tokens: Vec<Token>,
-    commands: Vec<dyn Command>
 }
 
 impl Parser {
-
 }
 
-pub struct Model {
-    node: HashMap<String, usize>
-}
-
-impl Model {
-    pub fn generate(&self) -> impl MarkovChain {}
+pub struct generator {
+    model_type: ModelType,
+    node_map: HashMap<String, i32>,
+    transitions: Array2<f32>,
 }
