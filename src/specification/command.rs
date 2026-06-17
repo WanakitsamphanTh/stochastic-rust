@@ -5,8 +5,13 @@ use crate::specification::expression::{Expression, Value};
 use crate::specification::token::Token;
 use std::collections::HashMap;
 
-trait Command {
+pub trait Command {
     fn run(&self, generator: &mut Generator) -> Result<(), Box<dyn CodeError>>;
+}
+
+pub trait Section<T> {
+    fn new() -> Self;
+    fn push(&mut self, stmt: T);
 }
 
 pub struct DefCommand {
@@ -29,9 +34,29 @@ impl Command for DefCommand {
     }
 }
 
+impl Section<VarDeclaration> for DefCommand {
+    fn new() -> Self {
+        Self {
+            dec: Vec::new()
+        }
+    }
+    fn push(&mut self, stmt: VarDeclaration) {
+        self.dec.push(stmt);
+    }
+}
+
 pub struct VarDeclaration {
     name: Token,
     val: Box<dyn Expression>
+}
+
+impl VarDeclaration {
+    pub fn new(token: Token, val: Box<dyn Expression>) -> Self {
+        Self {
+            name: Token::from(token),
+            val: val
+        }
+    }
 }
 
 impl Command for VarDeclaration {
@@ -67,9 +92,32 @@ impl Command for ModelCommand {
     }
 }
 
+impl Section<TransitionDeclaration> for ModelCommand {
+    fn new() -> Self {
+        Self {
+            transitions: Vec::new()
+        }
+    }
+    fn push(&mut self, stmt: TransitionDeclaration) {
+        self.transitions.push(stmt);
+    }
+}
+
 pub struct TransitionDeclaration {
     current: Token,
     next: HashMap<Token, Box<dyn Expression>>
+}
+
+impl TransitionDeclaration {
+    pub fn new(current: Token) -> Self{
+        Self {
+            current: current,
+            next: HashMap::new()
+        }
+    }
+    pub fn push(&mut self, next: Token, expr: Box<dyn Expression>) {
+        self.push(next, expr);
+    }
 }
 
 impl Command for TransitionDeclaration {
@@ -78,17 +126,12 @@ impl Command for TransitionDeclaration {
         generator.add_node(current);
         for (k,v) in self.next.iter() {
             let next = &k.lexeme;
-            match v.eval(generator){
-                Ok(value) => match value {
-                        Value::Number(val) => {
-                            generator.set_transition(current, next, val);
-                        },
-                        Value::Boolean(_) => {
-                            return Result::Err(Box::new(TypeError::new(String::from("Float"), String::from("Boolean"))));
-                        }
-                    }
-                Err(err) => {
-                    return Result::Err(err);
+            match v.eval(generator)? {
+                Value::Number(val) => {
+                    generator.set_transition(current, next, val);
+                }
+                Value::Boolean(_) => {
+                    return Result::Err(Box::new(TypeError::new(String::from("Float"), String::from("Boolean"))));
                 }
             }
         }
@@ -116,10 +159,29 @@ impl Command for InitCommand {
     }
 }
 
+impl Section<Initialization> for InitCommand {
+    fn new() -> Self {
+        Self {
+            inits: Vec::new()
+        }
+    }
+    fn push(&mut self, stmt: Initialization) {
+        self.inits.push(stmt);
+    }
+}
 
 pub struct Initialization {
     name: Token,
     val: Box<dyn Expression>
+}
+
+impl Initialization {
+    pub fn new(name: Token, val: Box<dyn Expression>) -> Self {
+        Self {
+            name: name,
+            val: val
+        }
+    }
 }
 
 impl Command for Initialization {

@@ -105,3 +105,8 @@ impl MarkovChain for CTMC {
         }
     }
 }
+
+pub enum MarkovChainModel {
+    Dtmc(DTMC),
+    Ctmc(CTMC)
+}

@@ -38,10 +38,10 @@ pub trait Expression {
     fn eval<'a>(&'a self, generator: &mut Generator) -> Result<Value, Box<dyn CodeError>>;
 }
 
+
 pub struct LiteralExpression {
     value: Value
 }
-
 
 impl Expression for LiteralExpression {
     fn eval<'a>(&'a self, _: &mut Generator) -> Result<Value, Box<dyn CodeError>>{
@@ -51,6 +51,14 @@ impl Expression for LiteralExpression {
 
 pub struct VariableExpression {
     name: Token,
+}
+
+impl VariableExpression {
+    pub fn  new(token: Token) -> Self {
+        Self {
+            name: token
+        }
+    }
 }
 
 impl Expression for VariableExpression {
@@ -66,6 +74,14 @@ pub struct GroupingExpression {
     expression: Box<dyn Expression>
 }
 
+impl GroupingExpression {
+    pub fn new(expr: Box<dyn Expression>) -> Self {
+        return Self {
+            expression: expr
+        }
+    }
+}
+
 impl Expression for GroupingExpression {
     fn eval<'a>(&'a self, generator: &mut Generator) -> Result<Value, Box<dyn CodeError>>{
         return self.expression.eval(generator);
@@ -76,6 +92,16 @@ pub struct BinaryExpression {
     operator: Token,
     left: Box<dyn Expression>,
     right: Box<dyn Expression>
+}
+
+impl BinaryExpression {
+    pub fn new(operator: Token, left: Box<dyn Expression>, right: Box<dyn Expression>) -> Self {
+        Self {
+            operator: operator,
+            left: left,
+            right: right
+        }
+    }
 }
 
 impl Expression for BinaryExpression {
@@ -121,6 +147,15 @@ impl Expression for BinaryExpression {
 pub struct UnaryExpression {
     operator: Token,
     right: Box<dyn Expression>
+}
+
+impl UnaryExpression {
+    pub fn new(operator: Token, right: Box<dyn Expression>) -> Self {
+        Self {
+            operator: operator,
+            right: right
+        }
+    }
 }
 
 impl Expression for UnaryExpression {
