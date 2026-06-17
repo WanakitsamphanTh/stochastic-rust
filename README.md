@@ -1,12 +1,19 @@
 # Markov Chain Simulator
-This project aims to develop a markov chain simulator in Rust which generates and simulates the model according to model specification. DTMC and CTMC is already implemented. The next step is to create the model generator. \
-**Progress** 
+This project aims to develop a markov chain simulator in Rust which generates and simulates the model according to model specification. DTMC and CTMC is already implemented. The next step is to create the model generator. 
 
+**Progress** 
 * [X] DTMC
 * [X] CTMC
 * [X] Tokenizer
-* [ ] Parser
-* [ ] Model Generator
+* [X] Parser
+* [X] Model Generator
+* [ ] Apply value constraint
+    - Row sums in CTMC must equal 0.0
+    - Row sums in DTMC must equal 1.0
+* [ ] Simulator object
+* [ ] Code refactoring
+* [ ] More control statements to reduce repetitive lines
+
 
 ## Model Specification Format
 ```
@@ -33,3 +40,9 @@ init:
 - All transitions not specified in the code is assigned to rate/problability 0.0 by default
 - All initial states not mentioned in the code is assigned to 0.0 by default
 - In DTMC, all transition values must sum up to 1.0
+
+## Dependency
+```
+ndarray = "0.17.2"
+scirs2-linalg = "0.5.0"
+```

@@ -1,11 +1,13 @@
 use scirs2_linalg::simd_ops::neural::Experience;
 
-use crate::token::{Token};
+use crate::{specification::expression::Expression, token::Token};
 use std::string::String;
+
 pub trait CodeError {
     fn what(&self) -> String;
 }
 
+#[derive(Debug, Clone)]
 pub struct ScanError {
     line: usize,
     pos: usize,
@@ -30,6 +32,7 @@ impl CodeError for ScanError {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct SyntaxError {
     line: usize,
     pos: usize,
@@ -48,12 +51,14 @@ impl SyntaxError {
     }
 }
 
+
 impl CodeError for SyntaxError {
     fn what(&self) -> String {
         return String::from(format!("Syntax Error! {} at {}:{}, {} ",self.lexeme, self.line, self.pos, self.msg));
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct TypeError {
     expected: String,
     given: String
@@ -74,6 +79,7 @@ impl CodeError for TypeError {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct IdentifierNotFoundError {
     identifier: String,
     line: usize,
@@ -93,5 +99,26 @@ impl IdentifierNotFoundError {
 impl CodeError for IdentifierNotFoundError {
     fn what(&self) -> String {
         return String::from(format!("Error: name {} at {}:{} not found", self.identifier, self.line, self.pos));
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ValueError {
+    line: usize,
+    pos: usize
+}
+
+impl ValueError {
+    pub fn new(line: usize, pos: usize) -> Self {
+        Self {
+            line: line,
+            pos: pos
+        }
+    }
+}
+
+impl CodeError for ValueError {
+    fn what(&self) -> String {
+        return String::from(format!("ValueError at {}:{} ", self.line, self.pos));
     }
 }

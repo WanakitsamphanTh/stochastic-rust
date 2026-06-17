@@ -33,10 +33,13 @@ impl Reader {
         return self.source[self.current];
     }
     fn advance(&mut self) -> char {
-        let c = self.peek();
+        if self.is_at_end() {
+            return '\0';
+        }
+        let c = self.source[self.current];
         self.current += 1;
         self.pos += 1;
-        return c;
+        c
     }
     fn next(&self) -> char {
         if self.current + 1 >= self.source.len() {
@@ -60,21 +63,20 @@ impl Reader {
             _ = self.advance()
         }
         let line = self.line;
-        let pos = self.pos;
         let current = self.current;
         let start = self.start;
+        let pos = self.pos - (current - start);
         let lexeme: String = self.source[start..current].iter().collect();
-        let name = lexeme.clone();
-        return Result::Ok(Token::new(TokenType::Variable, lexeme, Literal::Name(name), line, pos))
+        return Result::Ok(Token::new(TokenType::Variable, lexeme, Literal::Null, line, pos))
     }
     pub fn scan_keyword(&mut self) -> Result<Token, ScanError> {
         while self.peek().is_alphanumeric() {
             _ = self.advance()
         }
         let line = self.line;
-        let pos = self.pos;
         let current = self.current;
         let start = self.start;
+        let pos = self.pos - (current - start);
         let lexeme: String = self.source[start..current].iter().collect();
         return match lexeme.as_str() {
             "init" => Result::Ok(Token::new(TokenType::Init, lexeme, Literal::Null, line, pos)),
@@ -82,7 +84,7 @@ impl Reader {
             "dtmc" => Result::Ok(Token::new(TokenType::Dtmc, lexeme, Literal::Null, line, pos)),
             "def" => Result::Ok(Token::new(TokenType::Def, lexeme, Literal::Null, line, pos)),
             "model" => Result::Ok(Token::new(TokenType::Model, lexeme, Literal::Null, line, pos)),
-            _ => Result::Ok(Token::new(TokenType::Identifier, lexeme.clone(), Literal::Name(lexeme), line, pos))
+            _ => Result::Ok(Token::new(TokenType::Identifier, lexeme.clone(), Literal::Null, line, pos))
         }
     }
     pub fn scan_number(&mut self) -> Result<Token, ScanError> {
@@ -97,17 +99,17 @@ impl Reader {
             }
         }
         let line = self.line;
-        let pos = self.pos;
         let current = self.current;
         let start = self.start;
+        let pos = self.pos - (current - start);
         let lexeme: String = self.source[start..current].iter().collect();
         let val: f32 = lexeme.parse::<f32>().unwrap();
         return Result::Ok(Token::new(TokenType::Value, lexeme, Literal::Float(val), line, pos))
     }
     pub fn scan_token(&mut self) -> Result<Token, ScanError> {
-        let c = self.advance();
         let line = self.line;
         let pos = self.pos;
+        let c = self.advance();
         let lexeme = String::from(c);
         match c {
             '(' => Result::Ok(Token::new(TokenType::LeftParen, lexeme, Literal::Null, line, pos)),
@@ -129,8 +131,7 @@ impl Reader {
                 Result::Ok(Token::new(TokenType::NewLine, lexeme, Literal::Null, line, pos))
             },
             ' ' | '\r' | '\t' => {
-                self.start += 1;
-                self.scan_token()
+                Result::Ok(Token::new(TokenType::Skip, lexeme, Literal::Null, line, pos))
             },
             '$' => if self.peek().is_alphanumeric() {
                 self.scan_variable()
@@ -150,12 +151,20 @@ impl Reader {
         }
     }
     pub fn scan(&mut self) -> Result<Vec<Token>, ScanError> {
+        let mut prev_type: TokenType = TokenType::Eof;
         let mut tokens: Vec<Token> = Vec::new();
         while !self.is_at_end() {
             self.start = self.current;
             let result = self.scan_token();
             match result {
-                Ok(token) => tokens.push(token),
+                Ok(token) => {
+                    if token.token_type == TokenType::Skip || (prev_type == TokenType::NewLine && token.token_type == TokenType::NewLine) {
+                        continue;
+                    } else {
+                        prev_type = token.token_type;
+                        tokens.push(token);
+                    }
+                },
                 Err(error) => return Result::Err(error)
             }
         }

@@ -1,5 +1,4 @@
 use crate::specification::errors::{CodeError, IdentifierNotFoundError, TypeError};
-use crate::specification::expression::Value::Number;
 use crate::specification::generator::Generator;
 use crate::specification::expression::{Expression, Value};
 use crate::specification::token::Token;
@@ -105,7 +104,7 @@ impl Section<TransitionDeclaration> for ModelCommand {
 
 pub struct TransitionDeclaration {
     current: Token,
-    next: HashMap<Token, Box<dyn Expression>>
+    next: HashMap<String, Box<dyn Expression>>
 }
 
 impl TransitionDeclaration {
@@ -116,7 +115,7 @@ impl TransitionDeclaration {
         }
     }
     pub fn push(&mut self, next: Token, expr: Box<dyn Expression>) {
-        self.push(next, expr);
+        self.next.insert(next.lexeme, expr);
     }
 }
 
@@ -125,7 +124,8 @@ impl Command for TransitionDeclaration {
         let current = &self.current.lexeme;
         generator.add_node(current);
         for (k,v) in self.next.iter() {
-            let next = &k.lexeme;
+            let next = k;
+            generator.add_node(next);
             match v.eval(generator)? {
                 Value::Number(val) => {
                     generator.set_transition(current, next, val);

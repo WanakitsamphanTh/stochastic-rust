@@ -1,6 +1,6 @@
-use crate::specification::errors::{CodeError, IdentifierNotFoundError, SyntaxError, TypeError};
+use crate::specification::errors::{CodeError, IdentifierNotFoundError, SyntaxError, TypeError, ValueError};
 use crate::specification::generator::Generator;
-use crate::specification::token::{Token,TokenType};
+use crate::specification::token::{Literal, Token, TokenType};
 
 macro_rules! numeric_binary_op {
     ($left:expr, $right:expr, $op:tt) => {{
@@ -40,12 +40,23 @@ pub trait Expression {
 
 
 pub struct LiteralExpression {
-    value: Value
+    token: Token
+}
+
+impl LiteralExpression {
+    pub fn new(token: Token) -> Self {
+        Self {
+            token: token
+        }
+    }
 }
 
 impl Expression for LiteralExpression {
     fn eval<'a>(&'a self, _: &mut Generator) -> Result<Value, Box<dyn CodeError>>{
-        Result::Ok(self.value)
+        match self.token.literal {
+            Literal::Float(f) => Result::Ok(Value::Number(f)),
+            _ => Result::Err(Box::new(ValueError::new(self.token.line, self.token.pos)))
+        }
     }
 }
 

@@ -1,11 +1,14 @@
 mod markov;
 mod specification;
-
-use crate::markov::{DTMC, CTMC, MarkovChain, Time};
+use crate::markov::Time::Ct;
+use crate::markov::{DTMC, CTMC, MarkovChain, Time, MarkovChainModel};
+use crate::specification::command::Command;
 use crate::specification::errors::CodeError;
 use crate::specification::parser::Parser;
 use crate::specification::{token, scanner};
+use crate::specification::generator::Generator;
 use std::fs;
+use std::env::args;
 
 #[warn(unused)]
 fn knuth_die() {
@@ -97,13 +100,41 @@ fn main() {
     queue_system();
 } */
 
+
 fn main() {
 
-    let mut reader = scanner::Reader::new(fs::read_to_string("./input/model.txt").unwrap());
-    let tokens = reader.scan().unwrap_or_else(|e| panic!("{}", e.what()));
-    for token in &tokens {
-        print!("{:?}\n",token);
+    let args: Vec<String> = args().collect();
+    if args.len() < 2 {
+        panic!("No input file!");
     }
+    let name = args[1].clone();
+
+    let mut reader = scanner::Reader::new(fs::read_to_string(name).unwrap());
+    let tokens = reader.scan().unwrap_or_else(|e| panic!("{}", e.what()));
+    
     let mut parser = Parser::new(tokens);
-    parser.parse();
+    let (model_type, def_sec, model_sec, init_sec) =parser.parse().unwrap();
+    
+    let mut generator: Generator = Generator::new(model_type);
+    generator.run(def_sec);
+    generator.run(model_sec);
+    generator.run(init_sec);
+
+    let mc = generator.generate();
+    match mc {
+        MarkovChainModel::Dtmc(mut dtmc) => {
+            println!("It's DTMC");
+            println!("s0 : {}", dtmc.state());
+            dtmc.simulate(Time::Dt(50));
+            println!("matrix \n{}", dtmc.matrix());
+            println!("{}", dtmc.state());
+        },
+        MarkovChainModel::Ctmc(mut ctmc) => {
+            println!("It's CTMC");
+            println!("s0 : {}", ctmc.state());
+            ctmc.simulate(Time::Ct(50.0));
+            println!("matrix \n{}", ctmc.matrix());
+            println!("{}", ctmc.state());
+        }
+    }
 } 

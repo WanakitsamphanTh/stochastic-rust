@@ -1,6 +1,6 @@
 use std::string::String;
 
-#[derive(Debug,PartialEq,Eq,Clone)]
+#[derive(Debug,PartialEq,Eq,Clone,Copy)]
 pub enum TokenType {
     // Model types
     Dtmc,
@@ -34,14 +34,15 @@ pub enum TokenType {
     Value,
 
     // EOF
-    Eof
+    Eof,
+
+    Skip
 }
 
 #[derive(Debug,Clone)]
 pub enum Literal {
     Null,
     Float(f32), // real number literal
-    Name(String) // string literal (variable name, node name)
 }
 
 #[derive(Debug, Clone)]

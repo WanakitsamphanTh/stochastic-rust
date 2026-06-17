@@ -2,6 +2,8 @@ use std::collections::HashMap;
 use ndarray::Array2;
 
 use crate::markov::{CTMC, DTMC, MarkovChain, MarkovChainModel};
+use crate::specification::command::Command;
+use crate::specification::token::TokenType::Comma;
 use crate::specification::{expression::Value, parser::ModelType};
 
 pub struct Generator {
@@ -44,6 +46,7 @@ impl Generator {
         let next_id = self.state_map[next];
         self.transitions.insert((current_id, next_id), transition_value);
     }
+    
     pub fn initialize_node(&mut self, node: &String, value: f32) -> bool {
         if self.state_map.contains_key(node) {
             let node_id = self.state_map[node];
@@ -53,6 +56,15 @@ impl Generator {
             false
         }
     }
+    pub fn run(&mut self, cmd: impl Command) {
+        match cmd.run(self) {
+            Ok(_) => {},
+            Err(err) => {
+                panic!("{}",err.what());
+            }
+        }
+    }
+
     pub fn generate(&self) -> MarkovChainModel {
         let n = self.init.len();
         let mut matrix = Array2::<f32>::from_shape_fn((n,n), |_| 0.0);
