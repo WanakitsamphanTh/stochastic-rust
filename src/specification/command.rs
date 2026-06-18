@@ -1,11 +1,11 @@
-use crate::specification::errors::{CodeError, IdentifierNotFoundError, TypeError};
-use crate::specification::generator::Generator;
+use crate::specification::errors::{CodeError, TypeError};
+use crate::specification::simulator::Simulator;
 use crate::specification::expression::{Expression, Value};
 use crate::specification::token::Token;
 use std::collections::HashMap;
 
 pub trait Command {
-    fn run(&self, generator: &mut Generator) -> Result<(), Box<dyn CodeError>>;
+    fn run(&self, simulator: &mut Simulator) -> Result<(), Box<dyn CodeError>>;
 }
 
 pub trait Section<T> {
@@ -18,9 +18,9 @@ pub struct DefCommand {
 }
 
 impl Command for DefCommand {
-    fn run(&self, generator: &mut Generator) -> Result<(), Box<dyn CodeError>>{
+    fn run(&self, simulator: &mut Simulator) -> Result<(), Box<dyn CodeError>>{
         for dec in self.dec.iter() {
-            match dec.run(generator){
+            match dec.run(simulator){
                 Ok(_) => {
                     continue;
                 },
@@ -59,11 +59,11 @@ impl VarDeclaration {
 }
 
 impl Command for VarDeclaration {
-    fn run(&self, generator: &mut Generator) -> Result<(), Box<dyn CodeError>>{
+    fn run(&self, simulator: &mut Simulator) -> Result<(), Box<dyn CodeError>>{
         let name = &self.name.lexeme;
-        return match self.val.eval(generator) {
+        return match self.val.eval(simulator) {
             Ok(value) => {
-                generator.add_variable(name, value);
+                simulator.add_variable(name, value);
                 Result::Ok(())
             },
             Err(err) => Result::Err(err)
@@ -76,9 +76,9 @@ pub struct ModelCommand {
 }
 
 impl Command for ModelCommand {
-    fn run(&self, generator: &mut Generator) -> Result<(), Box<dyn CodeError>> {
+    fn run(&self, simulator: &mut Simulator) -> Result<(), Box<dyn CodeError>> {
         for transition in self.transitions.iter() {
-            match transition.run(generator){
+            match transition.run(simulator){
                 Ok(_) => {
                     continue;
                 },
@@ -120,15 +120,15 @@ impl TransitionDeclaration {
 }
 
 impl Command for TransitionDeclaration {
-    fn run(&self, generator: &mut Generator) -> Result<(), Box<dyn CodeError>> {
+    fn run(&self, simulator: &mut Simulator) -> Result<(), Box<dyn CodeError>> {
         let current = &self.current.lexeme;
-        generator.add_node(current);
+        simulator.add_node(current);
         for (k,v) in self.next.iter() {
             let next = k;
-            generator.add_node(next);
-            match v.eval(generator)? {
+            simulator.add_node(next);
+            match v.eval(simulator)? {
                 Value::Number(val) => {
-                    generator.set_transition(current, next, val);
+                    simulator.set_transition(current, next, val);
                 }
                 Value::Boolean(_) => {
                     return Result::Err(Box::new(TypeError::new(String::from("Float"), String::from("Boolean"))));
@@ -144,9 +144,9 @@ pub struct InitCommand {
 }
 
 impl Command for InitCommand {
-    fn run(&self, generator: &mut Generator) -> Result<(), Box<dyn CodeError>> {
+    fn run(&self, simulator: &mut Simulator) -> Result<(), Box<dyn CodeError>> {
         for initialization in self.inits.iter() {
-            match initialization.run(generator){
+            match initialization.run(simulator){
                 Ok(_) => {
                     continue;
                 },
@@ -172,38 +172,19 @@ impl Section<Initialization> for InitCommand {
 
 pub struct Initialization {
     name: Token,
-    val: Box<dyn Expression>
 }
 
 impl Initialization {
-    pub fn new(name: Token, val: Box<dyn Expression>) -> Self {
+    pub fn new(name: Token) -> Self {
         Self {
-            name: name,
-            val: val
+            name: name
         }
     }
 }
 
 impl Command for Initialization {
-    fn run(&self, generator: &mut Generator) -> Result<(), Box<dyn CodeError>> {
-        match self.val.eval(generator) {
-            Ok(val) => {
-                match val {
-                    Value::Number(val) => {
-                        if generator.initialize_node(&self.name.lexeme, val) {
-                            Result::Ok(())
-                        } else {
-                            Result::Err(Box::new(IdentifierNotFoundError::new(&self.name)))
-                        }
-                    }, 
-                    Value::Boolean(_) => {
-                        Result::Err(Box::new(TypeError::new(String::from("Number"), String::from("Bool"))))
-                    }
-                }
-            },
-            Err(err) => {
-                Result::Err(err)
-            }
-        }
+    fn run(&self, simulator: &mut Simulator) -> Result<(), Box<dyn CodeError>> {
+        simulator.initialize_node(&self.name.lexeme, 1.0);
+        Result::Ok(())
     }
 }

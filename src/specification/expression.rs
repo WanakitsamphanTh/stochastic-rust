@@ -1,5 +1,5 @@
 use crate::specification::errors::{CodeError, IdentifierNotFoundError, SyntaxError, TypeError, ValueError};
-use crate::specification::generator::Generator;
+use crate::specification::simulator::Simulator;
 use crate::specification::token::{Literal, Token, TokenType};
 
 macro_rules! numeric_binary_op {
@@ -35,7 +35,7 @@ pub enum Value {
 }
 
 pub trait Expression {
-    fn eval<'a>(&'a self, generator: &mut Generator) -> Result<Value, Box<dyn CodeError>>;
+    fn eval<'a>(&'a self, simulator: &mut Simulator) -> Result<Value, Box<dyn CodeError>>;
 }
 
 
@@ -52,7 +52,7 @@ impl LiteralExpression {
 }
 
 impl Expression for LiteralExpression {
-    fn eval<'a>(&'a self, _: &mut Generator) -> Result<Value, Box<dyn CodeError>>{
+    fn eval<'a>(&'a self, _: &mut Simulator) -> Result<Value, Box<dyn CodeError>>{
         match self.token.literal {
             Literal::Float(f) => Result::Ok(Value::Number(f)),
             _ => Result::Err(Box::new(ValueError::new(self.token.line, self.token.pos)))
@@ -73,8 +73,8 @@ impl VariableExpression {
 }
 
 impl Expression for VariableExpression {
-    fn eval<'a>(&'a self, generator: &mut Generator) -> Result<Value, Box<dyn CodeError>>{
-        match generator.lookup_variable(&self.name.lexeme) {
+    fn eval<'a>(&'a self, simulator: &mut Simulator) -> Result<Value, Box<dyn CodeError>>{
+        match simulator.lookup_variable(&self.name.lexeme) {
             Ok(val) => Result::Ok(val),
             Err(_) => Result::Err(Box::new(IdentifierNotFoundError::new(&self.name)))
         }
@@ -94,8 +94,8 @@ impl GroupingExpression {
 }
 
 impl Expression for GroupingExpression {
-    fn eval<'a>(&'a self, generator: &mut Generator) -> Result<Value, Box<dyn CodeError>>{
-        return self.expression.eval(generator);
+    fn eval<'a>(&'a self, simulator: &mut Simulator) -> Result<Value, Box<dyn CodeError>>{
+        return self.expression.eval(simulator);
     }
 }
 
@@ -116,10 +116,10 @@ impl BinaryExpression {
 }
 
 impl Expression for BinaryExpression {
-    fn eval<'a>(&'a self, generator: &mut Generator) -> Result<Value, Box<dyn CodeError>>{
+    fn eval<'a>(&'a self, simulator: &mut Simulator) -> Result<Value, Box<dyn CodeError>>{
         let left: Value;
         let right: Value;
-        match self.left.eval(generator) {
+        match self.left.eval(simulator) {
             Ok(v) => {
                 left = v;
             },
@@ -127,7 +127,7 @@ impl Expression for BinaryExpression {
                 return Result::Err(err);
             }
         }
-        match self.right.eval(generator) {
+        match self.right.eval(simulator) {
             Ok(v) => {
                 right = v;
             },
@@ -170,9 +170,9 @@ impl UnaryExpression {
 }
 
 impl Expression for UnaryExpression {
-    fn eval<'a>(&'a self, generator: &mut Generator) -> Result<Value, Box<dyn CodeError>>{
+    fn eval<'a>(&'a self, simulator: &mut Simulator) -> Result<Value, Box<dyn CodeError>>{
         let right: Value;
-        match self.right.eval(generator) {
+        match self.right.eval(simulator) {
             Ok(v) => {
                 right = v;
             },

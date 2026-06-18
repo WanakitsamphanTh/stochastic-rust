@@ -406,6 +406,7 @@ name = "markov"
 version = "0.1.0"
 dependencies = [
  "ndarray",
+ "rand 0.10.1",
  "scirs2-linalg",
 ]
 

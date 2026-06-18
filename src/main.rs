@@ -1,15 +1,14 @@
 mod markov;
 mod specification;
-use crate::markov::Time::Ct;
-use crate::markov::{DTMC, CTMC, MarkovChain, Time, MarkovChainModel};
-use crate::specification::command::Command;
+use crate::markov::{MarkovChain};
 use crate::specification::errors::CodeError;
 use crate::specification::parser::Parser;
 use crate::specification::{token, scanner};
-use crate::specification::generator::Generator;
+use crate::specification::simulator::Simulator;
 use std::fs;
 use std::env::args;
 
+/*
 #[warn(unused)]
 fn knuth_die() {
     let transition = |curr: usize, next: usize| -> f32  {
@@ -92,14 +91,7 @@ fn queue_system() {
     let states = ctmt.state();
     print!("after t=100.0: {0}\n", states);
 }
-
-
-/*
-fn main() {
-    knuth_die();
-    queue_system();
-} */
-
+ */
 
 fn main() {
 
@@ -115,26 +107,22 @@ fn main() {
     let mut parser = Parser::new(tokens);
     let (model_type, def_sec, model_sec, init_sec) =parser.parse().unwrap();
     
-    let mut generator: Generator = Generator::new(model_type);
-    generator.run(def_sec);
-    generator.run(model_sec);
-    generator.run(init_sec);
+    let mut simulator: Simulator = Simulator::new(model_type, def_sec, model_sec, init_sec).unwrap_or_else(|e| panic!("{}", e.what()));
+    simulator.generate();
 
-    let mc = generator.generate();
-    match mc {
-        MarkovChainModel::Dtmc(mut dtmc) => {
-            println!("It's DTMC");
-            println!("s0 : {}", dtmc.state());
-            dtmc.simulate(Time::Dt(50));
-            println!("matrix \n{}", dtmc.matrix());
-            println!("{}", dtmc.state());
-        },
-        MarkovChainModel::Ctmc(mut ctmc) => {
-            println!("It's CTMC");
-            println!("s0 : {}", ctmc.state());
-            ctmc.simulate(Time::Ct(50.0));
-            println!("matrix \n{}", ctmc.matrix());
-            println!("{}", ctmc.state());
-        }
+    for i in 1..=3 {
+        let s = simulator.next();
+        println!("step {}, transitioned to {}", i, s);
+    }
+
+    println!("After transitions");
+    for (k,v) in simulator.dist_of(["r1","r2","r3","r4","r5","r6"])  {
+        print!("{} : {}\n", k, v);
+    }
+
+    println!("Stationary Distribution");
+    simulator.stationary(1e-8, 100);
+    for (k,v) in simulator.dist_of(["r1","r2","r3","r4","r5","r6"])  {
+        print!("{} : {}\n", k, v);
     }
 } 

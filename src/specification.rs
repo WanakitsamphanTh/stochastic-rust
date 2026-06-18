@@ -3,5 +3,5 @@ pub mod token;
 pub mod errors;
 pub mod parser;
 pub mod expression;
-pub mod generator;
+pub mod simulator;
 pub mod command;

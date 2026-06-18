@@ -2,12 +2,7 @@ use crate::specification::command::{DefCommand, InitCommand, Initialization, Mod
 use crate::specification::errors::{SyntaxError};
 use crate::{token::{Token,TokenType}};
 use crate::specification::expression::{BinaryExpression, Expression, GroupingExpression, LiteralExpression, UnaryExpression, VariableExpression};
-
-#[derive(Debug)]
-pub enum ModelType {
-    Ctmc,
-    Dtmc
-}
+use crate::markov::ModelType;
 
 pub struct Parser {
     tokens: Vec<Token>,
@@ -111,13 +106,13 @@ impl Parser {
     fn scan_transition_decl(&mut self) -> Result<TransitionDeclaration, SyntaxError> {    
         let start = self.consume(TokenType::Identifier, "Expect state name")?.clone();
         self.consume(TokenType::Arrow, "Expect arrow after start node")?;
-        let mut transitions = TransitionDeclaration::new(start);
+        let mut transitions: TransitionDeclaration = TransitionDeclaration::new(start);
 
         loop {
             self.consume(TokenType::LeftParen, "Expect '('")?;
             let expr = self.parse_expression()?;
             self.consume(TokenType::RightParen, "Expect ')'")?;
-            let next_node = self.consume(TokenType::Identifier, "Expect next state after transition rate/problability")?.clone();
+            let next_node: Token = self.consume(TokenType::Identifier, "Expect next state after transition rate/problability")?.clone();
             transitions.push(next_node, expr);
             if self.match_and_advance([TokenType::NewLine, TokenType::Eof]) {
                 break
@@ -131,25 +126,19 @@ impl Parser {
 
     fn scan_init_section(&mut self) -> Result<InitCommand, SyntaxError>{
         let mut def = InitCommand::new();
-        while !self.section_end() {
-            match self.scan_init() {
-                Ok(cmd) => {
-                    def.push(cmd);
-                },
-                Err(err) => {
-                    return Result::Err(err);
-                }
-            }
+        let cmd = self.scan_init()?;
+        def.push(cmd);
+        if !self.section_end() {
+            Result::Err(SyntaxError::new(self.peek(), "Only one initial state is allowed"))
+        } else {
+            Result::Ok(def)
         }
-        return Result::Ok(def);
     }
 
     fn scan_init(&mut self) -> Result<Initialization, SyntaxError> {
-        let node_name = self.consume(TokenType::Identifier, "Expect node name in initialization")?.clone();
-        self.consume(TokenType::Equal, "Expect '=' after node name")?;
-        let expr = self.parse_expression()?;
-        self.consume(TokenType::NewLine, "Expect new line after each declaration")?;
-        return Result::Ok(Initialization::new(node_name, expr));
+        let node_name = self.consume(TokenType::Identifier, "Expect state name in initialization")?.clone();
+        self.consume(TokenType::NewLine, "Expect new line after state")?;
+        return Result::Ok(Initialization::new(node_name));
     }
 
     fn parse_expression(&mut self) -> Result<Box<dyn Expression>, SyntaxError> {
