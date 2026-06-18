@@ -7,12 +7,12 @@ This project aims to develop a markov chain simulator in Rust which generates an
 * [X] Tokenizer
 * [X] Parser
 * [X] Model Generator
-* [ ] Apply value constraint
+* [ ] Apply value constraints
     - Row sums in CTMC must equal 0.0
     - Row sums in DTMC must equal 1.0
 * [X] Simulator object
 * [ ] Code refactoring
-* [ ] More control statements to reduce repetitive lines
+* [ ] More control statements to reduce repetitive lines such as loop etc.
 
 
 ## Model Specification Format
@@ -39,7 +39,7 @@ In DTMC, states whose transitions are not defined are absorbing states by defaul
 ## Preliminary conditions
 - All transitions not specified in the code is assigned to rate/problability 0.0 by default
 - Only one initial state with problability of 1.0 and if not specified, the first state in model section becomes the initial state by default.
-- In DTMC, all transition values must sum up to 1.0
+- In DTMC, all transition values must be positive and sum up to 1.0
 
 ## Dependency
 ```
