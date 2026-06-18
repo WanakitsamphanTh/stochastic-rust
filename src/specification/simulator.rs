@@ -74,7 +74,7 @@ impl Simulator {
     }
 
     pub fn generate(&mut self) -> &MarkovChain {
-        let n = self.init.len();
+        let n: usize = self.init.len();
         self.model = MarkovChain::from_pairs(self.model_type, n, self.init.clone(), self.curr, &self.transitions);
         return &self.model;
     }
@@ -86,25 +86,32 @@ impl Simulator {
     }
 
     pub fn reset(&mut self) {
-        self.model.reassign_state(self.init.clone(), self.init);
+        self.model.reassign_state(self.init.clone(), self.init.iter().position(|&x|x == 1.0).unwrap());
         self.steps = 0;
     }
 
-    pub fn stationary(&mut self, eps: f32, max_T: usize) -> StateDist {
-        let prev = self.model.state();
-        for i in 1..=max_T {
+    pub fn stationary(&mut self, eps: f32, max_t: usize) -> (StateDist, usize) {
+        let mut prev = self.model.state();
+        let mut steps: usize = 0;
+        for i in 1..=max_t {
             self.model.step();
             let curr = self.model.state();
-            let err = (curr - &prev).abs().mean().unwrap();
+            let err = (&curr - &prev).abs().mean().unwrap();
             if err < eps {
+                steps = i;
                 break
             }
+            prev = curr;
         }
-        return self.dist();
+        return (self.dist(), steps);
     }
 
     pub fn dist(&self) -> StateDist{
         return self.model.state();
+    }
+
+    pub fn time(&self) -> f32 {
+        return self.model.time();
     }
 
     pub fn dist_of<'a, const i: usize>(&self, states: [&'a str; i]) -> HashMap<&'a str, f32> {

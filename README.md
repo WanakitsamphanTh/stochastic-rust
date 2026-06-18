@@ -30,7 +30,6 @@ model:
 init:
     node_name
 
-
 ```
 
 `{model_type}` : specify model type (`dcmc` or `dtmc`) \

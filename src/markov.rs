@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 use rand::distr::weighted::WeightedIndex;
-use rand::prelude::*;
+use rand::{distr, prelude::*};
 use rand::distr::{weighted, Distribution};
+use rand_distr::Exp;
 use ndarray::{self, Array, Array2, Axis};
 use scirs2_linalg::{expm};
 
@@ -22,7 +23,8 @@ pub struct MarkovChain {
     curr: State,
     s: StateDist,
     p: TransitionMatrix,
-    model_type: ModelType
+    model_type: ModelType,
+    time: f32
 }
 
 impl MarkovChain {
@@ -31,7 +33,8 @@ impl MarkovChain {
             curr: 0,
             s: Array::from_vec(Vec::new()),
             p: Array2::from_shape_vec((1,1),vec![0.0]).unwrap(),
-            model_type: ModelType::None
+            model_type: ModelType::None,
+            time: 0.0
         }
     }
 
@@ -56,7 +59,8 @@ impl MarkovChain {
             s: s,
             curr: curr,
             p: matrix,
-            model_type: model_type
+            model_type: model_type,
+            time: 0.0
         }
     }
 
@@ -78,6 +82,12 @@ impl MarkovChain {
         for (&(curr,next), &val) in transitions.iter() {
             p[[curr,next]] = val;
         }
+        let row_sums = p.sum_axis(Axis(1));
+        if model_type == ModelType::Ctmc {
+            for i in 0..n_state {
+                p[[i,i]] = -row_sums[i];
+            }
+        }
         return Self::from_arr(model_type, init_prob, curr, p);
     }
 
@@ -94,19 +104,40 @@ impl MarkovChain {
         return self.p.clone();
     }
 
+    pub fn time(&self) -> f32 {
+        return self.time;
+    }
+
     pub fn step(&mut self) -> State{
         match self.model_type {
             ModelType::Ctmc => {
+                let mut rng = rand::rng();
+
+                let rates = self.p.row(self.curr);
+                let lambda = -rates[self.curr];
+                let tau = Exp::new(lambda).unwrap().sample(&mut rng);
+
+                if lambda != 0.0 { // if the current state is not an absorbing state
+                    let probs = (&rates / lambda).map(|&x| if x < 0.0 { 0.0 } else {x}).to_vec();
+                    let nexts = WeightedIndex::new(&probs).unwrap();
+                    self.curr = rng.sample(nexts);
+                }
+                
                 let p: TransitionMatrix = expm(&(&self.p).view(),None).expect("Simulation failed");
                 self.s = self.s.dot(&p);
+                self.time += tau;
+
                 return self.curr;
             },
             ModelType::Dtmc => {
                 let probs = self.p.row(self.curr).to_vec();
-                let mut nexts = WeightedIndex::new(&probs).unwrap();
-                let mut rng = rand::rng();
-                self.curr = rng.sample(nexts);
+                if probs[self.curr] != 1.0 { //if the current state is not absorbing state
+                    let nexts = WeightedIndex::new(&probs).unwrap();
+                    let mut rng = rand::rng();
+                    self.curr = rng.sample(nexts);
+                }
                 self.s = self.s.dot(&self.p);
+                self.time += 1.0;
                 return self.curr;
             },
             ModelType::None => {
