@@ -44,5 +44,7 @@ In DTMC, states whose transitions are not defined are absorbing states by defaul
 ## Dependency
 ```
 ndarray = "0.17.2"
+rand = "0.10.1"
+rand_distr = "0.6.0"
 scirs2-linalg = "0.5.0"
 ```
