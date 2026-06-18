@@ -7,7 +7,7 @@ This project aims to develop a markov chain simulator in Rust which generates an
 * [X] Tokenizer
 * [X] Parser
 * [X] Model Generator
-* [ ] Apply value constraints
+* [X] Apply value constraints
     - Row sums in CTMC must equal 0.0
     - Row sums in DTMC must equal 1.0
 * [X] Simulator object
