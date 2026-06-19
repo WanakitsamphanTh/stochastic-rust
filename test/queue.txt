@@ -1,0 +1,16 @@
+ctmc
+
+def:
+    $mu = 0.5
+    $lambda = 0.3
+
+model:
+    q0 -> ($lambda) q1
+    q1 -> ($lambda) q2, ($mu) q0
+    q2 -> ($lambda) q3, ($mu) q1
+    q3 -> ($lambda) q4, ($mu) q2
+    q4 -> ($lambda) q5, ($mu) q3
+    q5 -> ($mu) q4
+
+init:
+    q0

@@ -86,19 +86,20 @@ impl Simulator {
     }
 
     pub fn reset(&mut self) {
-        self.model.reassign_state(self.init.clone(), self.init);
+        self.model.reset(self.init.clone(), 0);
         self.steps = 0;
     }
 
-    pub fn stationary(&mut self, eps: f32, max_T: usize) -> StateDist {
-        let prev = self.model.state();
-        for i in 1..=max_T {
+    pub fn stationary(&mut self, eps: f32, max_t: usize) -> StateDist {
+        let mut prev = self.model.state();
+        for _ in 1..=max_t {
             self.model.step();
             let curr = self.model.state();
-            let err = (curr - &prev).abs().mean().unwrap();
+            let err = (&curr - &prev).abs().mean().unwrap();
             if err < eps {
                 break
             }
+            prev = curr;
         }
         return self.dist();
     }
@@ -117,5 +118,8 @@ impl Simulator {
             dist.insert(s, p);
         }
         return dist;
+    }
+    pub fn time(&self) -> f32 {
+        return self.model.time();
     }
 }

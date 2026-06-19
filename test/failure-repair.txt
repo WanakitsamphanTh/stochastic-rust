@@ -1,0 +1,12 @@
+ctmc
+
+def:
+    $mu = 5
+    $lambda = 10
+
+model:
+    available -> ($mu) failed
+    failed -> ($lambda) available
+
+init:
+    available

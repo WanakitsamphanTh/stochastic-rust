@@ -108,21 +108,15 @@ fn main() {
     let (model_type, def_sec, model_sec, init_sec) =parser.parse().unwrap();
     
     let mut simulator: Simulator = Simulator::new(model_type, def_sec, model_sec, init_sec).unwrap_or_else(|e| panic!("{}", e.what()));
-    simulator.generate();
+    let model = simulator.generate();
 
-    for i in 1..=3 {
-        let s = simulator.next();
-        println!("step {}, transitioned to {}", i, s);
+    println!("Transition matrix: \n{}", model.matrix());
+
+    for i in 1..=20 {
+        let s = simulator.next().clone();
+        let t = simulator.time();
+        println!("step {} t={}, transitioned to {}", i, t,  s);
     }
 
-    println!("After transitions");
-    for (k,v) in simulator.dist_of(["r1","r2","r3","r4","r5","r6"])  {
-        print!("{} : {}\n", k, v);
-    }
-
-    println!("Stationary Distribution");
-    simulator.stationary(1e-8, 100);
-    for (k,v) in simulator.dist_of(["r1","r2","r3","r4","r5","r6"])  {
-        print!("{} : {}\n", k, v);
-    }
+    println!("State problability distribution after 20 steps: {}", simulator.dist());
 } 

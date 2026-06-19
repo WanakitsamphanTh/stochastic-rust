@@ -7,7 +7,7 @@ This project aims to develop a markov chain simulator in Rust which generates an
 * [X] Tokenizer
 * [X] Parser
 * [X] Model Generator
-* [ ] Apply value constraint
+* [X] Apply value constraint
     - Row sums in CTMC must equal 0.0
     - Row sums in DTMC must equal 1.0
 * [X] Simulator object
@@ -45,5 +45,7 @@ In DTMC, states whose transitions are not defined are absorbing states by defaul
 ## Dependency
 ```
 ndarray = "0.17.2"
+rand = "0.10.1"
+rand_distr = "0.6.0"
 scirs2-linalg = "0.5.0"
 ```
