@@ -4,6 +4,7 @@ use rand::{distr, prelude::*};
 use rand::distr::{weighted, Distribution};
 use rand_distr::Exp;
 use ndarray::{self, Array, Array2, Axis};
+use scirs2_linalg::matrix_functions::exponential;
 use scirs2_linalg::{expm};
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -23,8 +24,8 @@ pub struct MarkovChain {
     curr: State,
     s: StateDist,
     p: TransitionMatrix,
-    model_type: ModelType,
-    time: f32
+    t: f32,
+    model_type: ModelType
 }
 
 impl MarkovChain {
@@ -33,8 +34,8 @@ impl MarkovChain {
             curr: 0,
             s: Array::from_vec(Vec::new()),
             p: Array2::from_shape_vec((1,1),vec![0.0]).unwrap(),
-            model_type: ModelType::None,
-            time: 0.0
+            t: 0.0,
+            model_type: ModelType::None
         }
     }
 
@@ -59,8 +60,8 @@ impl MarkovChain {
             s: s,
             curr: curr,
             p: matrix,
-            model_type: model_type,
-            time: 0.0
+            t: 0.0,
+            model_type: model_type
         }
     }
 
@@ -79,19 +80,22 @@ impl MarkovChain {
 
     pub fn from_pairs(model_type: ModelType, n_state: usize, init_prob: Vec<f32>, curr: State, transitions: &HashMap<(usize,usize),f32>) -> Self {
         let mut p: TransitionMatrix = Array2::from_shape_fn((n_state,n_state), |_| 0.0);
+        
         for (&(curr,next), &val) in transitions.iter() {
             p[[curr,next]] = val;
         }
+
         let row_sums = p.sum_axis(Axis(1));
         if model_type == ModelType::Ctmc {
             for i in 0..n_state {
                 p[[i,i]] = -row_sums[i];
             }
         }
+
         return Self::from_arr(model_type, init_prob, curr, p);
     }
 
-    pub fn reassign_state(&mut self, dist: Vec<f32>, s: State) {
+    pub fn reset(&mut self, dist: Vec<f32>, s: State) {
         self.s = Array::from_vec(dist);
         self.curr = s;
     }
@@ -100,49 +104,55 @@ impl MarkovChain {
         return self.s.clone();
     }
 
+    pub fn absorbed(&self) -> bool {
+        match self.model_type {
+            ModelType::Ctmc => self.p[[self.curr, self.curr]] == 0.0,
+            ModelType::Dtmc => self.p[[self.curr, self.curr]] == 1.0,
+            ModelType::None => false
+        }
+    }
+
     pub fn matrix(&self) -> TransitionMatrix {
         return self.p.clone();
     }
 
-    pub fn time(&self) -> f32 {
-        return self.time;
-    }
-
     pub fn step(&mut self) -> State{
+        let mut rng = rand::rng();
         match self.model_type {
             ModelType::Ctmc => {
-                let mut rng = rand::rng();
+                let rates = self.p.row(self.curr).to_vec();
+                let lambda = - rates[self.curr];
+                if lambda != 0.0 {
+                    let tau = rand_distr::Exp::new(lambda).unwrap().sample(&mut rng);
+                    self.t += tau;
 
-                let rates = self.p.row(self.curr);
-                let lambda = -rates[self.curr];
-                let tau = Exp::new(lambda).unwrap().sample(&mut rng);
-
-                if lambda != 0.0 { // if the current state is not an absorbing state
-                    let probs = (&rates / lambda).map(|&x| if x < 0.0 { 0.0 } else {x}).to_vec();
+                    let probs: Vec<f32> = rates.iter().map(|&q| if q < 0.0 { 0.0 } else { q / lambda }).collect();
                     let nexts = WeightedIndex::new(&probs).unwrap();
                     self.curr = rng.sample(nexts);
                 }
-                
+
                 let p: TransitionMatrix = expm(&(&self.p).view(),None).expect("Simulation failed");
                 self.s = self.s.dot(&p);
-                self.time += tau;
 
                 return self.curr;
             },
             ModelType::Dtmc => {
                 let probs = self.p.row(self.curr).to_vec();
-                if probs[self.curr] != 1.0 { //if the current state is not absorbing state
-                    let nexts = WeightedIndex::new(&probs).unwrap();
-                    let mut rng = rand::rng();
-                    self.curr = rng.sample(nexts);
-                }
+                let nexts = WeightedIndex::new(&probs).unwrap();
+                self.curr = rng.sample(nexts);
+                self.t += 1.0;
+
                 self.s = self.s.dot(&self.p);
-                self.time += 1.0;
+                self.t += 1.0;
                 return self.curr;
             },
             ModelType::None => {
                 panic!("Not initialized yet");
             }
         }
+    }
+
+    pub fn time(&self) -> f32 {
+        return self.t;
     }
 }
