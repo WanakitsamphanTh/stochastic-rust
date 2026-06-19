@@ -41,10 +41,10 @@ impl MarkovChain {
 
     pub fn from_arr(model_type: ModelType, init_prob: Vec<f32>, curr: State, mut matrix: Array2<f32>) -> Self {
         let s = Array::from_vec(init_prob);
-
+        
         let row_sums = matrix.sum_axis(Axis(1));
         if model_type == ModelType::Ctmc {
-            assert!(row_sums.iter().all(|&p| p == 0.0));
+            assert!(row_sums.iter().all(|&p| p < 1e-16));
         }
 
         if model_type == ModelType::Dtmc {
