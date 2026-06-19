@@ -1,0 +1,18 @@
+ctmc
+
+def:
+    $alpha = 0.5
+    $lambda = 0.1
+    $mu = 0.2
+
+model:
+    p0 -> ($alpha) p1
+    p1 -> ($mu) p0, ($alpha + $lambda) p2
+    p2 -> (2 * $mu) p1, ($alpha + 2 * $lambda) p3
+    p3 -> (3 * $mu) p2, ($alpha + 3 * $lambda) p4
+    p4 -> (3 * $mu) p3, ($alpha + 4 * $lambda) p5
+    p5 -> (4 * $mu) p4, ($alpha + 5 * $lambda) p6
+    p6 -> (5 * $mu) p5
+
+init:
+    p0

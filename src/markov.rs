@@ -14,8 +14,8 @@ pub enum ModelType {
     None
 }
 
-pub type TransitionMatrix = ndarray::prelude::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::prelude::Dim<[usize; 2]>, f32>;
-pub type StateDist = ndarray::prelude::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::prelude::Dim<[usize; 1]>, f32>;
+pub type TransitionMatrix = ndarray::prelude::ArrayBase<ndarray::OwnedRepr<f64>, ndarray::prelude::Dim<[usize; 2]>, f64>;
+pub type StateDist = ndarray::prelude::ArrayBase<ndarray::OwnedRepr<f64>, ndarray::prelude::Dim<[usize; 1]>, f64>;
 pub type State = usize;
 
 
@@ -24,7 +24,7 @@ pub struct MarkovChain {
     curr: State,
     s: StateDist,
     p: TransitionMatrix,
-    t: f32,
+    t: f64,
     model_type: ModelType
 }
 
@@ -39,12 +39,12 @@ impl MarkovChain {
         }
     }
 
-    pub fn from_arr(model_type: ModelType, init_prob: Vec<f32>, curr: State, mut matrix: Array2<f32>) -> Self {
+    pub fn from_arr(model_type: ModelType, init_prob: Vec<f64>, curr: State, mut matrix: Array2<f64>) -> Self {
         let s = Array::from_vec(init_prob);
-        
         let row_sums = matrix.sum_axis(Axis(1));
+
         if model_type == ModelType::Ctmc {
-            assert!(row_sums.iter().all(|&p| p < 1e-16));
+            assert!(row_sums.iter().all(|&p| p < 1e-8));
         }
 
         if model_type == ModelType::Dtmc {
@@ -65,7 +65,7 @@ impl MarkovChain {
         }
     }
 
-    pub fn from_fn(model_type: ModelType, n_state: usize, init_prob: Vec<f32>, curr: usize, transition_fn: impl Fn(usize, usize) -> f32) -> Self {
+    pub fn from_fn(model_type: ModelType, n_state: usize, init_prob: Vec<f64>, curr: usize, transition_fn: impl Fn(usize, usize) -> f64) -> Self {
         let mut p: TransitionMatrix = Array2::from_shape_fn((n_state,n_state), |(s_curr, s_next)| transition_fn(s_curr,s_next));
         let row_sums = p.sum_axis(Axis(1));
 
@@ -78,7 +78,7 @@ impl MarkovChain {
         return Self::from_arr(model_type, init_prob, curr, p);
     }
 
-    pub fn from_pairs(model_type: ModelType, n_state: usize, init_prob: Vec<f32>, curr: State, transitions: &HashMap<(usize,usize),f32>) -> Self {
+    pub fn from_pairs(model_type: ModelType, n_state: usize, init_prob: Vec<f64>, curr: State, transitions: &HashMap<(usize,usize),f64>) -> Self {
         let mut p: TransitionMatrix = Array2::from_shape_fn((n_state,n_state), |_| 0.0);
         
         for (&(curr,next), &val) in transitions.iter() {
@@ -95,7 +95,7 @@ impl MarkovChain {
         return Self::from_arr(model_type, init_prob, curr, p);
     }
 
-    pub fn reset(&mut self, dist: Vec<f32>, s: State) {
+    pub fn reset(&mut self, dist: Vec<f64>, s: State) {
         self.s = Array::from_vec(dist);
         self.curr = s;
     }
@@ -126,7 +126,7 @@ impl MarkovChain {
                     let tau = rand_distr::Exp::new(lambda).unwrap().sample(&mut rng);
                     self.t += tau;
 
-                    let probs: Vec<f32> = rates.iter().map(|&q| if q < 0.0 { 0.0 } else { q / lambda }).collect();
+                    let probs: Vec<f64> = rates.iter().map(|&q| if q < 0.0 { 0.0 } else { q / lambda }).collect();
                     let nexts = WeightedIndex::new(&probs).unwrap();
                     self.curr = rng.sample(nexts);
                 }
@@ -152,7 +152,7 @@ impl MarkovChain {
         }
     }
 
-    pub fn time(&self) -> f32 {
+    pub fn time(&self) -> f64 {
         return self.t;
     }
 }

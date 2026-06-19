@@ -10,8 +10,8 @@ pub struct Simulator {
     variable_map: HashMap<String, Value>,
     state_map: HashMap<String, usize>,
     state_map_rev: HashMap<usize, String>,
-    transitions: HashMap<(usize,usize), f32>,
-    init: Vec<f32>,
+    transitions: HashMap<(usize,usize), f64>,
+    init: Vec<f64>,
     curr: State,
     model: MarkovChain,
     steps: usize
@@ -57,13 +57,13 @@ impl Simulator {
         }
     }
 
-    pub fn set_transition(&mut self, current: &String, next: &String, transition_value: f32) {
+    pub fn set_transition(&mut self, current: &String, next: &String, transition_value: f64) {
         let current_id = self.state_map[current];
         let next_id = self.state_map[next];
         self.transitions.insert((current_id, next_id), transition_value);
     }
     
-    pub fn initialize_node(&mut self, node: &String, value: f32) -> bool {
+    pub fn initialize_node(&mut self, node: &String, value: f64) -> bool {
         if self.state_map.contains_key(node) {
             let node_id = self.state_map[node];
             self.init[node_id] = value;
@@ -90,7 +90,7 @@ impl Simulator {
         self.steps = 0;
     }
 
-    pub fn stationary(&mut self, eps: f32, max_t: usize) -> StateDist {
+    pub fn stationary(&mut self, eps: f64, max_t: usize) -> StateDist {
         let mut prev = self.model.state();
         for _ in 1..=max_t {
             self.model.step();
@@ -108,12 +108,12 @@ impl Simulator {
         return self.model.state();
     }
 
-    pub fn time(&self) -> f32 {
+    pub fn time(&self) -> f64 {
         return self.model.time();
     }
 
-    pub fn dist_of<'a, const i: usize>(&self, states: [&'a str; i]) -> HashMap<&'a str, f32> {
-        let mut dist: HashMap<&'a str, f32> = HashMap::new();
+    pub fn dist_of<'a, const i: usize>(&self, states: [&'a str; i]) -> HashMap<&'a str, f64> {
+        let mut dist: HashMap<&'a str, f64> = HashMap::new();
         let curr_dist = self.dist();
         for s in states {
             let state = String::from(s);

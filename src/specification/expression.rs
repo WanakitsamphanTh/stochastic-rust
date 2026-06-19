@@ -30,7 +30,7 @@ macro_rules! numeric_unary_op {
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Value {
-    Number(f32),
+    Number(f64),
     Boolean(bool)
 }
 

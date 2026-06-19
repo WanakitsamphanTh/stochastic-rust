@@ -1,8 +1,8 @@
 ctmc
 
 def:
-    $mu = 5 / 10
-    $lambda = 10 / 10
+    $mu = 1 / 10
+    $lambda = 5 / 10
 
 model:
     available -> ($mu) failed

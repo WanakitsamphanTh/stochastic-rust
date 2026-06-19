@@ -103,7 +103,7 @@ impl Reader {
         let start = self.start;
         let pos = self.pos - (current - start);
         let lexeme: String = self.source[start..current].iter().collect();
-        let val: f32 = lexeme.parse::<f32>().unwrap();
+        let val: f64 = lexeme.parse::<f64>().unwrap();
         return Result::Ok(Token::new(TokenType::Value, lexeme, Literal::Float(val), line, pos))
     }
     pub fn scan_token(&mut self) -> Result<Token, ScanError> {

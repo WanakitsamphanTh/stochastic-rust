@@ -42,7 +42,7 @@ pub enum TokenType {
 #[derive(Debug,Clone)]
 pub enum Literal {
     Null,
-    Float(f32), // real number literal
+    Float(f64), // real number literal
 }
 
 #[derive(Debug, Clone)]
